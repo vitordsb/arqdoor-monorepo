@@ -1,0 +1,66 @@
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: arqdoor-mysql-prod
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data_prod:/var/lib/mysql
+    networks:
+      - arqdoor-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: arqdoor-backend-prod
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      PORT: 8080
+      SECRET: ${SECRET}
+      ASAAS_API_KEY: ${ASAAS_API_KEY}
+      ASAAS_WEBHOOK_TOKEN: ${ASAAS_WEBHOOK_TOKEN}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      ENABLE_DB_SYNC: ${ENABLE_DB_SYNC:-false}
+      ENABLE_DB_SYNC_ALTER: ${ENABLE_DB_SYNC_ALTER:-false}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    ports:
+      - "80:8080"
+      - "8080:8080"
+    volumes:
+      - uploads_data_prod:/app/uploads
+    networks:
+      - arqdoor-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  arqdoor-network:
+    driver: bridge
+
+volumes:
+  mysql_data_prod:
+  uploads_data_prod:
