@@ -12,6 +12,9 @@ VPS_IP="89.116.225.129"
 VPS_USER="root"
 REMOTE_DIR="/var/www/arqdoor-monorepo"
 
+# Garantir que o script execute a partir do diretório onde ele está
+cd "$(dirname "$0")"
+
 echo -e "${BLUE}>>> Iniciando Deploy Automatizado do ArqDoor <<<${NC}"
 
 # 1. Verificar Vercel CLI
@@ -47,16 +50,26 @@ EOF
 
 echo -e "${GREEN}>>> Backend Deployed com Sucesso!${NC}"
 
-# 3. Deploy Frontend (Vercel)
-echo -e "\n${YELLOW}>>> 2. Deploy do Frontend na Vercel...${NC}"
+# 3. Build do Frontend (Para Hostinger Web Hosting)
+echo -e "\n${YELLOW}>>> 2. Build do Frontend para Hostinger Web Hosting...${NC}"
 cd frontend
 
-# Deploy para produção
-echo "Enviando para Vercel (Produção)..."
-vercel --prod
+echo "Instalando dependências..."
+npm install
 
-echo -e "${GREEN}>>> Frontend Deployed com Sucesso!${NC}"
+echo "Gerando build de produção..."
+# Garantir que a URL da API esteja correta no build
+export VITE_API_URL="https://api.arqdoor.com"
+npm run build
 
-echo -e "\n${BLUE}>>> DEPLOY COMPLETO! <<<${NC}"
+echo -e "${GREEN}>>> Build Concluído!${NC}"
+echo -e "Os arquivos estão na pasta: ${BLUE}frontend/dist${NC}"
+
+echo -e "\n${YELLOW}>>> INSTRUÇÕES PARA HOSTINGER WEB HOSTING: <<<${NC}"
+echo "1. Acesse o Gerenciador de Arquivos da Hostinger"
+echo "2. Vá para public_html"
+echo "3. Faça upload do conteúdo da pasta 'frontend/dist'"
+echo "   (index.html, assets/, etc)"
+
+echo -e "\n${BLUE}>>> DEPLOY BACKEND COMPLETO! <<<${NC}"
 echo -e "Backend: https://api.arqdoor.com/doc"
-echo -e "Frontend: https://arqdoor.com (ou URL da Vercel)"
