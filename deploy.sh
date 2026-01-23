@@ -32,6 +32,7 @@ sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_IP << EOF
     cd $REMOTE_DIR
     echo "Puxando atualizações..."
     git pull origin main
+    git submodule update --init --recursive
     
     echo "Reconstruindo Backend..."
     # Parar backend antigo
