@@ -1,0 +1,29 @@
+# Environment files
+.env.docker
+.env
+.env.local
+.env.production
+
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Node (caso tenha node_modules na raiz)
+node_modules/
+
+# Volumes data (se houver backup local)
+mysql_data/
+uploads_data/

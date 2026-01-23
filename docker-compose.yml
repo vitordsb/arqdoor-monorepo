@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: arqdoor-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-arqdoor_dev}
+      MYSQL_USER: ${DB_USER:-arqdoor}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-arqdoor123}
+    ports:
+      - "3307:3306"  # Changed to 3307 to avoid conflict with local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - arqdoor-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: arqdoor-backend-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-arqdoor_dev}
+      DB_USER: ${DB_USER:-arqdoor}
+      DB_PASSWORD: ${DB_PASSWORD:-arqdoor123}
+      PORT: 8080
+      SECRET: ${SECRET:-dev-secret-key-change-in-production}
+      ASAAS_API_KEY: ${ASAAS_API_KEY}
+      ASAAS_WEBHOOK_TOKEN: ${ASAAS_WEBHOOK_TOKEN}
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://frontend:5173
+      ENABLE_DB_SYNC: "true"
+      ENABLE_DB_SYNC_ALTER: "true"
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-arqdoor@admin.com.br}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      # Mount source code for hot reload
+      - ./backend:/app
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+      # Persistent uploads
+      - uploads_data:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - arqdoor-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/doc"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: arqdoor-frontend-dev
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:8080
+    ports:
+      - "5173:5173"
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend:/app
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+    networks:
+      - arqdoor-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  mysql_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  arqdoor-network:
+    driver: bridge
