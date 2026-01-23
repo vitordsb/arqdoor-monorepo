@@ -10,6 +10,7 @@ NC='\033[0m' # No Color
 # Configurações
 VPS_IP="89.116.225.129"
 VPS_USER="root"
+VPS_PASS="7QSuvA8gt9MGms;yLnS."
 REMOTE_DIR="/var/www/arqdoor-monorepo"
 
 # Garantir que o script execute a partir do diretório onde ele está
@@ -17,12 +18,7 @@ cd "$(dirname "$0")"
 
 echo -e "${BLUE}>>> Iniciando Deploy Automatizado do ArqDoor <<<${NC}"
 
-# 1. Verificar Vercel CLI
-if ! command -v vercel &> /dev/null; then
-    echo -e "${RED}Erro: Vercel CLI não encontrado.${NC}"
-    echo "Instale com: npm i -g vercel"
-    exit 1
-fi
+# ... (rest of script)
 
 # 2. Deploy Backend (VPS)
 echo -e "\n${YELLOW}>>> 1. Deploy do Backend na VPS ($VPS_IP)...${NC}"
@@ -32,7 +28,7 @@ git commit -m "deploy: update backend and frontend"
 git push origin main
 
 echo "Conectando na VPS para atualizar..."
-ssh $VPS_USER@$VPS_IP << EOF
+sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_IP << EOF
     cd $REMOTE_DIR
     echo "Puxando atualizações..."
     git pull origin main
