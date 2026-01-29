@@ -19,7 +19,7 @@ sshpass -p "$VPS_PASS" ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_IP << EOF
     cd $REMOTE_DIR
     echo "Puxando atualizações..."
     git pull origin main
-    git submodule update --init --recursive 
+    git submodule update --init --recursive backend 
     
     echo "Reconstruindo Backend..."
     docker compose -f docker-compose.backend-only.yml down

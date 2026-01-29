@@ -1,6 +1,3 @@
 [submodule "backend"]
 	path = backend
 	url = https://github.com/vitordsb/arqdoor-backend.git
-[submodule "frontend"]
-	path = frontend
-	url = https://github.com/vitordsb/ArqDoor.git
